@@ -75,6 +75,28 @@ for json_url in json_urls:
     materials = your_json["data"]["materials"]
     print(f"Доп материалы: {materials}")
 
+    # Создание папки для дополнительных материалов
+    materials_folder = os.path.join(folder_path, "materials")
+    os.makedirs(materials_folder, exist_ok=True)
+
+    # Получение значения "materials"
+    materials = your_json["data"]["materials"]
+
+    # Скачивание дополнительных материалов (если есть)
+    if materials:
+        for material in materials:
+            material_name = material["name"]
+            material_url = material["file"]
+            material_extension = material_url.split(".")[-1]
+            material_filename = f"{material_name}.{material_extension}"
+            material_path = os.path.join(materials_folder, material_filename)
+            material_response = requests.get(material_url)
+            with open(material_path, "wb") as material_file:
+                material_file.write(material_response.content)
+            print(f"Дополнительный материал скачан: {material_path}")
+    else:
+        print("Нет дополнительных материалов.")
+
     # Добавление текстовых блоков из "blocks"
     for block in your_json["data"]["blocks"]:
         block_type = block["blockType"]

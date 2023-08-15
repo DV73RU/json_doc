@@ -97,11 +97,7 @@ for json_url in json_urls:
                     for elem in elems:
                         add_text_block(doc, "- " + elem, 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
                     add_empty_line(doc)
-
-    # Скачивание и сохранение изображений из блока "blockType": 5 "carousel"
-
-    for block in your_json["data"]["blocks"]:
-        if block["blockType"] == 5 and "carousel" in block:
+        elif block["blockType"] == 5 and "carousel" in block:
             carousel_images = block["carousel"]
             for index, carousel_item in enumerate(carousel_images):
                 image_url = carousel_item["image"]
@@ -112,18 +108,79 @@ for json_url in json_urls:
                 image_path = os.path.join(folder_path, image_filename)
                 with open(image_path, "wb") as image_file:
                     image_file.write(image_response.content)
-                print(f"Изображение из блока 'carousel' сохранено: {image_path}")
-
-                # Вставка изображения в docx
-                doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
+                # downloaded_images_count += 1
+                print(f"Изображение из блока 'blockType:5''carousel' сохранено: {image_path}")
 
                 # Добавление подписи к изображению
                 sign = carousel_item.get("sign")
-                if sign:
+                if sign is not None:
                     add_empty_line(doc)
-                    add_text_block(doc, "Комментарий:", 12, WD_PARAGRAPH_ALIGNMENT.LEFT)
-                    add_text_block(doc, sign, 10, font_style='italic', alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
+                    # Вставка изображения в docx
+                    doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
+                    if sign:
+                        # Добавление комментария, если он есть
+                        add_text_block(doc, "Комментарий:", 12, WD_PARAGRAPH_ALIGNMENT.LEFT)
+                        add_text_block(doc, sign, 10, font_style='italic', alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
                     add_empty_line(doc)
+                else:
+                    # Вставка изображения в docx без комментария
+                    doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
+                    add_empty_line(doc)
+    # Скачивание и сохранение изображений из блока "blockType": 5 "carousel"
+
+    # for block in your_json["data"]["blocks"]:
+    #     if block["blockType"] == 5 and "carousel" in block:
+    #         carousel_images = block["carousel"]
+    #         for index, carousel_item in enumerate(carousel_images):
+    #             image_url = carousel_item["image"]
+    #             image_response = requests.get(image_url)
+    #             image_extension = image_url.split(".")[-1]
+    #             image_hash = hashlib.md5(image_response.content).hexdigest()
+    #             image_filename = f"carousel_{image_hash}.{image_extension}"
+    #             image_path = os.path.join(folder_path, image_filename)
+    #             with open(image_path, "wb") as image_file:
+    #                 image_file.write(image_response.content)
+    #             print(f"Изображение из блока 'carousel' сохранено: {image_path}")
+    #
+    #             # Вставка изображения в docx
+    #             doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
+    #
+    #             # Добавление подписи к изображению
+    #             # Добавление подписи к изображению, если она есть
+    #             sign = carousel_item.get("sign")
+    #             if sign:
+    #                 add_empty_line(doc)
+    #                 add_text_block(doc, "Комментарий:", 12, WD_PARAGRAPH_ALIGNMENT.LEFT)
+    #                 add_text_block(doc, sign, 10, font_style='italic', alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
+    #                 add_empty_line(doc)
+
+    # Скачивание и сохранение изображений из блока "carousel"
+    # for block in your_json["data"]["blocks"]:
+    #     if block["blockType"] == 5 and "carousel" in block:
+    #         carousel_images = block["carousel"]
+    #         for index, carousel_item in enumerate(carousel_images):
+    #             image_url = carousel_item["image"]
+    #             image_response = requests.get(image_url)
+    #             image_extension = image_url.split(".")[-1]
+    #             image_hash = hashlib.md5(image_response.content).hexdigest()
+    #             image_filename = f"carousel_{image_hash}.{image_extension}"
+    #             image_path = os.path.join(folder_path, image_filename)
+    #             with open(image_path, "wb") as image_file:
+    #                 image_file.write(image_response.content)
+    #             # downloaded_images_count += 1
+    #             print(f"Изображение из блока 'carousel' сохранено: {image_path}")
+    #
+    #             # Добавление подписи к изображению
+    #             sign = carousel_item.get("sign")
+    #             if sign is not None:
+    #                 add_empty_line(doc)
+    #                 # Вставка изображения в docx
+    #                 doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
+    #                 add_empty_line(doc)
+    #                 # Добавление комментария, если он есть
+    #                 add_text_block(doc, "Комментарий:", 12, WD_PARAGRAPH_ALIGNMENT.LEFT)
+    #                 add_text_block(doc, sign, 10, font_style='italic', alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
+    #                 add_empty_line(doc)
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

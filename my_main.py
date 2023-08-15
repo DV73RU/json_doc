@@ -1,3 +1,4 @@
+import hashlib
 import os
 import requests
 from docx import Document
@@ -13,7 +14,6 @@ json_url = "https://academyopen.ru/api-7/news/903"
 json_urls = [
     "https://academyopen.ru/api-7/news/903",
     "https://academyopen.ru/api-7/news/904",
-    "https://academyopen.ru/api-7/news/905"
 
 
 ]
@@ -38,6 +38,29 @@ for json_url in json_urls:
     docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
     print(f"Создан файл: {docx_filename}\n+---------------------------------------------------------------------------------+")
 
+    # Скачивание и сохранение изображения в папку с названием статьи
+    image_url = your_json["data"]["socialPhoto"]
+    image_response = requests.get(image_url)
+    image_path = os.path.join(folder_path, "image.jpg")  # Задайте имя файла изображения
+    with open(image_path, "wb") as image_file:
+        image_file.write(image_response.content)
+    print(f"Изображение сохранено: {image_path}")
+
+    # Скачивание и сохранение изображений из блока "carousel"
+    for block in your_json["data"]["blocks"]:
+        if block["blockType"] == 5 and "carousel" in block:
+            carousel_images = block["carousel"]
+            for index, carousel_item in enumerate(carousel_images):
+                image_url = carousel_item["image"]
+                image_response = requests.get(image_url)
+                image_extension = image_url.split(".")[-1]  # Получение расширения изображения
+                image_hash = hashlib.md5(
+                    image_response.content).hexdigest()  # Генерация хэша из содержимого изображения
+                image_filename = f"carousel_{image_hash}.{image_extension}"
+                image_path = os.path.join(folder_path, image_filename)
+                with open(image_path, "wb") as image_file:
+                    image_file.write(image_response.content)
+                print(f"Изображение из блока 'carousel' сохранено: {image_path}")
     # Создание документа
     doc = Document()
     doc.styles['Normal'].font.name = 'Times New Roman'

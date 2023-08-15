@@ -1,3 +1,4 @@
+import os
 import requests
 from docx import Document
 from docx.shared import Pt
@@ -13,14 +14,22 @@ json_urls = [
     "https://academyopen.ru/api-7/news/903",
     "https://academyopen.ru/api-7/news/904",
     "https://academyopen.ru/api-7/news/905"
+
+
 ]
+
+# Создаем папку для сохранения документов, если её еще нет
+if not os.path.exists("docx_files"):
+    os.makedirs("docx_files")
+
 # Для каждого URL получаем JSON данные и создаем документ
 for json_url in json_urls:
     response = requests.get(json_url)
     your_json = response.json()
 
-    # Получаем значение из поля "title" для названия файла
-    docx_filename = your_json["data"]["title"] + ".docx"
+    # Получение значения из поля "title" для названия файла
+    title = your_json["data"]["title"]
+    docx_filename = f"docx_files/{title}.docx"
 
     # Создание документа
     doc = Document()
@@ -41,9 +50,9 @@ for json_url in json_urls:
         doc.add_paragraph("")
 
 
-    # Добавление названия рубрики
-    rubric_name = your_json["data"]["rubric"]["name"]
-    add_text_block(rubric_name, 10, WD_PARAGRAPH_ALIGNMENT.CENTER)
+    # # Добавление названия рубрики
+    # rubric_name = your_json["data"]["rubric"]["name"]
+    # add_text_block(rubric_name, 10, WD_PARAGRAPH_ALIGNMENT.CENTER)
 
     # Добавление названия статьи
     title = your_json["data"]["title"]
@@ -89,5 +98,8 @@ for json_url in json_urls:
             add_text_block(text, 10)
             add_empty_line()
 
-    # Сохраняем документ с названием из поля "title"
-    doc.save(docx_filename)
+    # Сохранение документа в папку с названием статьи
+    if not os.path.exists(title):
+        os.makedirs(title)
+    doc.save(os.path.join(title, docx_filename))
+

@@ -24,8 +24,8 @@ for json_url in json_urls:
     response = requests.get(json_url)
     your_json = response.json()
 
-    # Создаем папку для сохранения документов, если её еще нет
 
+    # Создаем папку для сохранения документов, если её еще нет
     title = your_json["data"]["title"]
     title_for_folder = title.replace('/', '_').replace(':', '_')    # Если в название статьи недопустимые символы
     folder_path = os.path.join(os.getcwd(), title_for_folder)
@@ -37,6 +37,12 @@ for json_url in json_urls:
     # Путь к файлу .docx внутри папки
     docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
     print(f"Создан файл: {docx_filename}\n+---------------------------------------------------------------------------------+")
+
+    # Создание счетчика для скачанных фото
+    downloaded_images_count = 0
+
+    # Увеличение счетчика скаченных изображений
+    downloaded_images_count += 1
 
     # Скачивание и сохранение изображения в папку с названием статьи
     image_url = your_json["data"]["socialPhoto"]
@@ -60,7 +66,10 @@ for json_url in json_urls:
                 image_path = os.path.join(folder_path, image_filename)
                 with open(image_path, "wb") as image_file:
                     image_file.write(image_response.content)
+                downloaded_images_count += 1
                 print(f"Изображение из блока 'carousel' сохранено: {image_path}")
+        # Вывод числа скаченных фото для текущей статьи
+    print(f"Для статьи '{title}' скачано {downloaded_images_count} изображений")
     # Создание документа
     doc = Document()
     doc.styles['Normal'].font.name = 'Times New Roman'

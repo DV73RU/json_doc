@@ -18,18 +18,25 @@ json_urls = [
 
 ]
 
-# Создаем папку для сохранения документов, если её еще нет
-if not os.path.exists("docx_files"):
-    os.makedirs("docx_files")
 
 # Для каждого URL получаем JSON данные и создаем документ
 for json_url in json_urls:
     response = requests.get(json_url)
     your_json = response.json()
 
-    # Получение значения из поля "title" для названия файла
+    # Создаем папку для сохранения документов, если её еще нет
+
     title = your_json["data"]["title"]
-    docx_filename = f"docx_files/{title}.docx"
+    title_for_folder = title.replace('/', '_').replace(':', '_')    # Если в название статьи недопустимые символы
+    folder_path = os.path.join(os.getcwd(), title_for_folder)
+
+    # Создание папки
+    os.makedirs(folder_path, exist_ok=True)
+    print(f"Создана директория: {folder_path}")
+
+    # Путь к файлу .docx внутри папки
+    docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
+    print(f"Создан файл: {docx_filename}\n+---------------------------------------------------------------------------------+")
 
     # Создание документа
     doc = Document()

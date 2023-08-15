@@ -93,6 +93,11 @@ for json_url in json_urls:
     subtitle = your_json["data"]["subtitle"]
     print(f"Subtitle: {subtitle}")
 
+    # Получение значения из поля "seoDescription"
+    seo_description = your_json["data"]["rubric"]["seoDescription"]
+    add_text_block(doc, seo_description, 12, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
+    print(f"seoDescription: {seo_description}")
+
     add_text_block(doc, subtitle, 12, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)  # Подзаголовок
     add_empty_line(doc)  # Вызов функции для добавления пустой строки
 
@@ -103,9 +108,6 @@ for json_url in json_urls:
     # Создание папки для дополнительных материалов
     materials_folder = os.path.join(folder_path, "materials")
     os.makedirs(materials_folder, exist_ok=True)
-
-    # Получение значения "materials"
-    materials = your_json["data"]["materials"]
 
     # Скачивание дополнительных материалов (если есть)
     if materials:
@@ -125,21 +127,12 @@ for json_url in json_urls:
     # Добавление текстовых блоков из "blocks"
     for block in your_json["data"]["blocks"]:
         block_type = block["blockType"]
-
-        if block_type == 1:
+        if block_type == 1:     # Оснеовной текст
             text = block.get("text")
             if text:
-                # Преобразование тегов <strong> в жирный текст
-                # text = re.sub(r'<strong>(.*?)<\/strong>', r'**\1**', text)
-                # text = "<strong>Этот текст будет жирным</strong> А этот нет."
-                text = html_to_plain_text(text)  # Преобразование HTML в обычный текст
-                text = re.sub(r'<strong>(.*?)<\/strong>', r'**\1**',
-                              text)  # Замена <strong> на ** для жирного форматирования
                 add_text_block(doc, text, 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
-                # add_text_block(doc, text, 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
                 add_empty_line(doc)
-
-        elif block_type == 10:
+        elif block_type == 10:  # Заголовок
             text = block.get("text")
             if text:
                 add_text_block(doc, text, 16, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
@@ -152,7 +145,7 @@ for json_url in json_urls:
                     for elem in elems:
                         add_text_block(doc, "- " + elem, 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
                     add_empty_line(doc)
-        elif block["blockType"] == 5 and "carousel" in block:
+        elif block["blockType"] == 5 and "carousel" in block: # Картинки
             carousel_images = block["carousel"]
             for index, carousel_item in enumerate(carousel_images):
                 image_url = carousel_item["image"]

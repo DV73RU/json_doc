@@ -22,8 +22,7 @@ from htmldocx import HtmlToDocx
 
 # Список URL для JSON данных
 json_urls = [
-    "https://academyopen.ru/api-7/news/903111",
-    "https://academyopen.ru/api-7/news/903",
+    "https://academyopen.ru/api-7/news/905"
 
     # ...  другие URL-ы с JSON данными
 ]
@@ -94,11 +93,11 @@ for json_url in json_urls:
     title_for_folder = title.replace('/', '_').replace(':', '_')  # Удаляем недопустимые знаки
     folder_path = os.path.join(os.getcwd(), title_for_folder)
     os.makedirs(folder_path, exist_ok=True)
-    # print(f"Создана директория: {folder_path}")
+    print(f"Создана директория: {folder_path}")
 
     # Путь к файлу .docx внутри папки
     docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
-    # print(f"Создан файл: {docx_filename}")
+    print(f"Создан файл: {docx_filename}")
 
     # Создание документа
     doc = Document()
@@ -106,29 +105,48 @@ for json_url in json_urls:
     html_to_docx = HtmlToDocx()
 
     doc.styles['Normal'].font.name = 'Times New Roman'
-    # Добавление таблицы для втавки значений Заголовок и Дискриптион
-    table = doc.add_table(rows=2, cols=2)
+    # Добавление таблицы для вставки значений Заголовок и Дискриптион
+    table = doc.add_table(rows=3, cols=2)
     table.autofit = True
+    # Установка стиля границ таблицы для тонких линий
+    table.style = 'Table Grid'
+    # Вставка заголовков в первый столбец
+    table.cell(0, 0).text = "Title"
+    table.cell(1, 0).text = "Description"
+
 
     # Добавление названия статьи
     add_text_block(doc, title, 14, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-    # print(f"Title: {title}")
+    print(f"Title: {title}")
 
     # Получение значения из поля "subtitle"
     subtitle = your_json["data"]["subtitle"]
-    # print(f"Subtitle: {subtitle}")
+    print(f"Subtitle: {subtitle}")
 
     # Получение значения из поля "seoDescription"
     seo_description = your_json["data"]["rubric"]["seoDescription"]
-    add_text_block(doc, seo_description, 12, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
-    # print(f"seoDescription: {seo_description}")
+    # add_text_block(doc, seo_description, 12, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)
+    print(f"seoDescription: {seo_description}")
 
     add_text_block(doc, subtitle, 12, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)  # Подзаголовок
     add_empty_line(doc)  # Вызов функции для добавления пустой строки
 
     # Получение значения "materials"
     materials = your_json["data"]["materials"]
-    # print(f"Доп материалы: {materials}")
+    print(f"Доп материалы: {materials}")
+
+    # Вставка значений title и seo_description во второй столбец
+    table.cell(0, 1).text = title
+    table.cell(1, 1).text = seo_description
+
+    # # Проверка наличия дополнительных материалов и вставка информации в третью строку
+    # if materials:
+    #     materials_info = "\n".join([f"Ошибка скачивания доп. материала: {material}" for material in materials])
+    # else:
+    #     materials_info = "Нет дополнительных материалов"
+
+    table.cell(2, 0).text = "Дополнительные материалы"
+    # table.cell(2, 1).text = materials_info
 
     # Создание папки для дополнительных материалов
     materials_folder = os.path.join(folder_path, "materials")
@@ -148,10 +166,14 @@ for json_url in json_urls:
                 with open(material_path, "wb") as material_file:
                     material_file.write(material_response.content)
                 print(f"Дополнительный материал скачан: {material_path}")
+                materials_info = material_name
+                table.cell(2, 1).text = materials_info
             except requests.exceptions.RequestException as e:
                 print(f"Ошибка при скачивании материала {material_name}: {e}")
+                materials_info = "\n".join([f"Ошибка скачивания доп. материала: {material}" for material in materials])
     else:
         print("Нет дополнительных материалов.")
+        materials_info = "Нет дополнительных материалов"
 
 
     # total_text_blocks = len(your_json["data"]["blocks"])
@@ -159,8 +181,8 @@ for json_url in json_urls:
     # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста', mininterval=0.01)
 
     # Добавление текстовых блоков из "blocks"
-    for block in tqdm(your_json["data"]["blocks"], desc="Processing blocks"):
-        # for block in your_json["data"]["blocks"]:
+    # for block in tqdm(your_json["data"]["blocks"], desc="Processing blocks"):
+    for block in your_json["data"]["blocks"]:
         block_type = block["blockType"]
         if block_type == 1:  # Основной текст
             text = block.get("text")
@@ -185,14 +207,15 @@ for json_url in json_urls:
                     add_empty_line(doc)
         elif block["blockType"] == 5 and "carousel" in block:  # Картинки
             carousel_images = block["carousel"]
-            # Обработка скачивания изображений
             for index, carousel_item in enumerate(carousel_images):
                 image_url = carousel_item["image"]
                 image_response = requests.get(image_url)
                 image_extension = image_url.split(".")[-1]
                 image_hash = hashlib.md5(image_response.content).hexdigest()
-                image_filename = f"carousel_{index + 1}.{image_extension}"  # Изменил имя для изображений
+                image_filename = f"carousel_{image_hash}.{image_extension}"
                 image_path = os.path.join(folder_path, image_filename)
+                with open(image_path, "wb") as image_file:
+                    image_file.write(image_response.content)
                 try:
                     image_response.raise_for_status()  # Проверка на успешный ответ (код 200)
                     with open(image_path, "wb") as image_file:
@@ -200,6 +223,7 @@ for json_url in json_urls:
                     print(f"Изображение из блока 'blockType:5''carousel' сохранено: {image_path}")
                 except requests.exceptions.RequestException as e:
                     print(f"Ошибка при скачивании изображения {image_url}: {e}")
+
                 # Добавление подписи к изображению
                 sign = carousel_item.get("sign")
                 if sign is not None:
@@ -215,7 +239,6 @@ for json_url in json_urls:
                     # Вставка изображения в docx без комментария
                     doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
                     add_empty_line(doc)
-        # text_bar.close()
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

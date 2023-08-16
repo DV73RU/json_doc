@@ -185,18 +185,21 @@ for json_url in json_urls:
                     add_empty_line(doc)
         elif block["blockType"] == 5 and "carousel" in block:  # Картинки
             carousel_images = block["carousel"]
+            # Обработка скачивания изображений
             for index, carousel_item in enumerate(carousel_images):
                 image_url = carousel_item["image"]
                 image_response = requests.get(image_url)
                 image_extension = image_url.split(".")[-1]
                 image_hash = hashlib.md5(image_response.content).hexdigest()
-                image_filename = f"carousel_{image_hash}.{image_extension}"
+                image_filename = f"carousel_{index + 1}.{image_extension}"  # Изменил имя для изображений
                 image_path = os.path.join(folder_path, image_filename)
-                with open(image_path, "wb") as image_file:
-                    image_file.write(image_response.content)
-                # downloaded_images_count += 1
-                # print(f"Изображение из блока 'blockType:5''carousel' сохранено: {image_path}")
-
+                try:
+                    image_response.raise_for_status()  # Проверка на успешный ответ (код 200)
+                    with open(image_path, "wb") as image_file:
+                        image_file.write(image_response.content)
+                    print(f"Изображение из блока 'blockType:5''carousel' сохранено: {image_path}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Ошибка при скачивании изображения {image_url}: {e}")
                 # Добавление подписи к изображению
                 sign = carousel_item.get("sign")
                 if sign is not None:

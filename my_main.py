@@ -2,7 +2,7 @@ import os
 import hashlib
 import requests
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from io import BytesIO
 import html2text
@@ -281,10 +281,14 @@ for json_url in json_urls:
         print(f"Ошибка: {e}")
         continue  # Прерываем итерацию и переходим к следующему URL
 
+    material_folder_name = "Материалы"
+
+
     # Создаем папку для сохранения документов, если её еще нет
     title = your_json["data"]["title"]
     title_for_folder = clean_filename(title)  # Используем функцию для обработки имени
-    folder_path = os.path.join(os.getcwd(), title_for_folder)
+    folder_path = os.path.join(os.getcwd(), material_folder_name, title_for_folder)
+
     os.makedirs(folder_path, exist_ok=True)
     print(f"Создана директория: {folder_path}")
 
@@ -359,13 +363,23 @@ for json_url in json_urls:
                 materials_info = material_name
                 table.cell(2, 1).text = materials_info  # Добавление в таблицу инфу о доп материале
             except requests.exceptions.RequestException as e:
-                print(f"Ошибка при скачивании материала {material_name}: {e}")
+
+                error_message = f"Ошибка при скачивании материала {material_name}: {e}"
+                colored_error_message = f"\033[91m{error_message}\033[0m"
+                print(colored_error_message)
                 materials_info = f"Ошибка скачивания материала: {material_name}"
-                table.cell(2, 1).text = materials_info  # Добавление в таблицу инфу о доп материале
+
+                # Создаем объект run для стилизации текста
+                run = table.cell(2, 1).paragraphs[0].add_run(materials_info)
+
+                # Применяем стили шрифта (красный цвет)
+                font = run.font
+                font.color.rgb = RGBColor(255, 0, 0)  # Красный цвет
     else:
         print("Нет дополнительных материалов.")
         materials_info = "Нет дополнительных материалов"  # Добавление информации в таблицу о доп материалах
         table.cell(2, 1).text = materials_info
+
 
     # total_text_blocks = len(your_json["data"]["blocks"])
     # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста')
@@ -426,6 +440,9 @@ for json_url in json_urls:
 
                 except requests.exceptions.RequestException as e:
                     print(f"Ошибка при скачивании изображения {image_url}: {e}")
+                    error_message = f"Ошибка при скачивании изображения {image_url}: {e}"
+                    colored_error_message = f"\033[91m{error_message}\033[0m"
+                    print(colored_error_message)
 
                 # Добавление подписи к изображению
                 sign = carousel_item.get("sign")

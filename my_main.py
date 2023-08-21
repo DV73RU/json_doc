@@ -10,6 +10,7 @@ from docx import Document
 from docx.shared import Pt
 import html2text
 from read_list_json import read_links_from_file
+import logging
 
 """
 Создаем директорию с названием новости
@@ -18,15 +19,16 @@ from read_list_json import read_links_from_file
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
-file_path = "Материалы/5 бизнес-идей для женщин/list_json2.txt"
+file_path = "list_json.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
+logging.basicConfig(filename='err_log.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s',
+                    encoding='utf-8')
 
 # Если список не пуст, продолжаем обработку
 # if links:
 #     # Далее можно проводить обработку списка ссылок
 #     print(links)
-
 
 
 # Список URL для JSON данных
@@ -83,13 +85,25 @@ for json_url in json_urls:
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при получении данных из URL: {json_url}")
         print(f"Ошибка: {e}")
+        logging.error(f"Ошибка при получении данных из URL: {json_url}")
         continue  # Прерываем итерацию и переходим к следующему URL
 
     material_folder_name = "Материалы"
 
-    # Создаем папку для сохранения документов, если её еще нет
+    # Создание документа
+    doc = Document()
+    # Создание объекта конвертера
+    html_to_docx = HtmlToDocx()
+
+    # Получение значения из поля "id"
+    id_ = your_json["data"]["id"]
+    add_text_block(doc, str(id_), 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)  # Добавление названия ID статьи
+    print(f"ID статьи: {id_}")
+
+    # Создаем директорию для сохранения документов, если её еще нет
+    # Название директории название слитьи и номер id
     title = your_json["data"]["title"]
-    title_for_folder = clean_filename(title)  # Используем функцию для обработки имени
+    title_for_folder = clean_filename(title + "_" + str(id_))  # Используем функцию для обработки имени
     folder_path = os.path.join(os.getcwd(), material_folder_name, title_for_folder)
 
     os.makedirs(folder_path, exist_ok=True)
@@ -98,11 +112,6 @@ for json_url in json_urls:
     # Путь к файлу .docx внутри папки
     docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
     print(f"Создан файл: {docx_filename}")
-
-    # Создание документа
-    doc = Document()
-    # Создание объекта конвертера
-    html_to_docx = HtmlToDocx()
 
     doc.styles['Normal'].font.name = 'Times New Roman'
     # Добавление таблицы для вставки значений Заголовок и Дискриптион
@@ -114,11 +123,6 @@ for json_url in json_urls:
     table.cell(0, 0).text = "Title"
     table.cell(1, 0).text = "Description"
     print("Добавлена таблица")
-
-    # Получение значения из поля "id"
-    id_ = your_json["data"]["id"]
-    add_text_block(doc, str(id_), 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)  # Добавление названия ID статьи
-    print(f"ID статьи: {id_}")
 
     # Добавление названия статьи
     add_text_block(doc, title, 14, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
@@ -169,6 +173,7 @@ for json_url in json_urls:
             except requests.exceptions.RequestException as e:
 
                 error_message = f"Ошибка при скачивании материала {material_name}: {e}"
+                logging.error(f"Ошибка при скачивании материала {material_name}: {e} : id = {id_}")
                 colored_error_message = f"\033[91m{error_message}\033[0m"
                 print(colored_error_message)
                 materials_info = f"Ошибка скачивания материала: {material_name}"
@@ -183,7 +188,6 @@ for json_url in json_urls:
         print("Нет дополнительных материалов.")
         materials_info = "Нет дополнительных материалов"  # Добавление информации в таблицу о доп материалах
         table.cell(2, 1).text = materials_info
-
 
     # Добавление текстовых блоков из "blocks"
     for block in your_json["data"]["blocks"]:
@@ -305,6 +309,7 @@ for json_url in json_urls:
                 except requests.exceptions.RequestException as e:
                     print(f"Ошибка при скачивании изображения {image_url}: {e}")
                     error_message = f"Ошибка при скачивании изображения {image_url}: {e}"
+                    logging.error(f"Ошибка при скачивании изображения {image_url}: {e} : id = {id_}")
                     colored_error_message = f"\033[91m{error_message}\033[0m"
                     print(colored_error_message)
 
@@ -365,13 +370,11 @@ for json_url in json_urls:
                 else:
                     doc.add_paragraph("Видео недоступно по указанной ссылке:")
                     doc.add_paragraph(modified_link)
+                    logging.error(f"Видео недоступно по ссылке: {modified_link} {id_}")
                     print("Видео недоступно по указанной ссылке.")
 
                 # doc.add_paragraph("Исходная ссылка на видео:")
                 # print(f"Исходная ссылка на видео - {link}")
-
-
-
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

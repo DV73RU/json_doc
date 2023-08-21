@@ -1,22 +1,13 @@
 import os
 import hashlib
 import requests
-from docx import Document
-from docx.opc.oxml import qn
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from io import BytesIO
-import html2text
 from docx.shared import Inches
-from bs4 import BeautifulSoup
-import re
 from tqdm import tqdm
 from htmldocx import HtmlToDocx
-from docx.shared import Pt
-from docx.oxml.ns import qn
 from docx import Document
 from docx.shared import Pt
-from docx.oxml.ns import qn
 import html2text
 
 """
@@ -66,13 +57,13 @@ def add_text_block(doc, text, font_size, font_style=None, alignment=WD_PARAGRAPH
 
 
 def clean_filename(filename):
-    invalid_chars = r'\/:*?"<>|'  # Здесь перечислены недопустимые символы
+    invalid_chars = r'\/:*?"<>|'  # Здесь перечислены недопустимые символы в названии директории и файла
     cleaned_filename = ''.join(c for c in filename if c not in invalid_chars)
     return cleaned_filename
 
 
 # Для каждого URL получаем JSON данные и создаем документ
-# for json_url in tqdm(json_urls, desc="Процесс JSON URLs"):
+
 # Статус-бар для JSON-файлов
 total_json_urls = len(json_urls)
 json_bar = tqdm(total=total_json_urls, desc='Процесс JSON URLs')
@@ -218,7 +209,7 @@ for json_url in json_urls:
             if text:
                 paragraph = doc.add_paragraph(text)
                 run = paragraph.runs[0]
-                run.font.size = Pt(12)
+                run.font.size = Pt(13)
                 run.bold = True
                 print(f"Добавлен: Заголовок")
 
@@ -271,7 +262,7 @@ for json_url in json_urls:
 
             if text:
                 # Добавление текста с курсивным стилем
-                paragraph = doc.add_paragraph('Комментарий пользователя: "' + text + '"')
+                paragraph = doc.add_paragraph()
                 run = paragraph.add_run(text)
                 font = run.font
                 font.italic = True
@@ -280,7 +271,7 @@ for json_url in json_urls:
 
             if author:
                 author_paragraph = doc.add_paragraph()
-                author_run = author_paragraph.add_run("Автор: " + author)
+                author_run = author_paragraph.add_run(author)
                 author_font = author_run.font
                 author_font.bold = True
                 print("Добавлен: Автор цитаты")

@@ -240,12 +240,35 @@ for json_url in json_urls:
         #             run.font.size = Pt(12)
         #             run.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-        elif block["blockType"] == 11:
+        elif block["blockType"] == 11:   # Список V.1
             # Извлекаем элементы списка
             list_items_html = block["elemList"]["elems"]
             for item in list_items_html:
-                html_to_docx.add_html_to_document(item, doc)
+                html_to_docx.add_html_to_document("• " + item, doc)
                 print(f"Добавлен: Элемент списка")
+
+        elif block["blockType"] == 24:   # Заголовок списка V.1
+            text = block.get("text")
+            if text:
+                paragraph = doc.add_paragraph(text)
+                run = paragraph.runs[0]
+                run.font.size = Pt(13)
+                run.bold = True
+                print(f"Добавлен: Заголовок списка")
+
+
+
+
+        # if block["blockType"] == 11:  # Список V.2
+        #     # Извлекаем элементы списка
+        #     list_items_html = block["elemList"]["elems"]
+        #     for item in list_items_html:
+        #         item_text = html_to_text(item)  # Преобразуем HTML в текст
+        #         paragraph = doc.add_paragraph(style="List Bullet")
+        #         run = paragraph.add_run("• ")  # Добавляем маркер точкой
+        #         run.bold = False  # Стиль маркера
+        #         paragraph.add_run(item_text)  # Добавляем элемент списка
+        #         print(f"Добавлен: Элемент списка")
 
         # elif block_type == 2:  # Комментарий пользователя сервиса V.1
         #     text = block.get("text")

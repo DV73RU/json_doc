@@ -205,13 +205,22 @@ for json_url in json_urls:
                 # text_bar.update(1)
                 # add_empty_line(doc)  # Вставляем пустую строку
 
-        elif block_type == 10:  # Заголовок
+        # elif block_type == 10:  # Заголовок V1.0
+        #     text = block.get("text")
+        #     if text:
+        #         # add_text_block(doc, text, 16, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
+        #         html_to_docx.add_html_to_document(text, doc,)
+        #         print(f"Добавлен: Заголовок")
+        #         # add_empty_line(doc)
+
+        elif block_type == 10:  # Заголовок V1.1
             text = block.get("text")
             if text:
-                # add_text_block(doc, text, 16, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-                html_to_docx.add_html_to_document(text, doc)
+                paragraph = doc.add_paragraph(text)
+                run = paragraph.runs[0]
+                run.font.size = Pt(12)
+                run.bold = True
                 print(f"Добавлен: Заголовок")
-                # add_empty_line(doc)
 
         # if block["blockType"] == 11:  # Список
         #     list_items_html = block["elemList"]["elems"]
@@ -240,35 +249,48 @@ for json_url in json_urls:
                 html_to_docx.add_html_to_document(item, doc)
                 print(f"Добавлен: Элемент списка")
 
-        elif block_type == 2:  # Комментарий пользователя сервиса
-            text = block.get("text")
-            author = block.get("author")
-            if text:
-                # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-                html_to_docx.add_html_to_document(text, doc)
-                html_to_docx.add_html_to_document(author, doc)
-                print(f"Добавлен: Текст комментария пользователя сервиса")
-
-            if author:
-                # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-
-                html_to_docx.add_html_to_document(author, doc)
-                print(f"Добавлен: Автор комментария пользователя сервиса")
-
-        # elif block_type == 2:  # Автор комментария пользователя сервиса
+        # elif block_type == 2:  # Комментарий пользователя сервиса V.1
+        #     text = block.get("text")
         #     author = block.get("author")
+        #     if text:
+        #         # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
+        #         html_to_docx.add_html_to_document(text, doc)
+        #
+        #         print(f"Добавлен: Текст комментария пользователя сервиса")
+        #
         #     if author:
-        #         # Преобразование HTML в DOCX
-        #         # add_text_block(doc, author, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
+        #         # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
+        #
         #         html_to_docx.add_html_to_document(author, doc)
         #         print(f"Добавлен: Автор комментария пользователя сервиса")
 
+        elif block_type == 2:  # Цитата и её автор V.2
+            text = block.get("text")
+            author = block.get("author")
+            comment = block.get("comment")
+
+            if text:
+                # Добавление текста с курсивным стилем
+                paragraph = doc.add_paragraph('Комментарий пользователя: "' + text + '"')
+                run = paragraph.add_run(text)
+                font = run.font
+                font.italic = True
+                # doc.add_paragraph(text)
+                print("Добавлен: Текст цитаты")
+
+            if author:
+                author_paragraph = doc.add_paragraph()
+                author_run = author_paragraph.add_run("Автор: " + author)
+                author_font = author_run.font
+                author_font.bold = True
+                print("Добавлен: Автор цитаты")
+            #
+            # if comment:
+            #     doc.add_paragraph('Комментарий пользователя: "' + comment + '"')
+            #     print("Добавлен: Комментарий блока 2")
+
         elif block["blockType"] == 5 and "carousel" in block:  # Картинки
             carousel_images = block["carousel"]
-            # total_images = len(carousel_images)
-            #
-            # # Создание статус-бара для скачивания изображений
-            # progress_bar = tqdm(total=total_images, desc="Скачивание изображений")
 
             for index, carousel_item in enumerate(carousel_images):
 

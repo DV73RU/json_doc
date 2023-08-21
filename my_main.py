@@ -335,9 +335,11 @@ for json_url in json_urls:
             if image_url:
                 response = requests.get(image_url)
                 if response.status_code == 200:
-                    with open("screenshot_video.png", "wb") as f:
+                    image_filename = "screenshot_video.png"  # Имя файла изображения
+                    image_path = os.path.join(folder_path, image_filename)  # Полный путь к файлу
+                    with open(image_path, "wb") as f:
                         f.write(response.content)
-                    doc.add_picture("screenshot_video.png",  width=Inches(6.0))
+                    doc.add_picture(image_path, width=Inches(6.0))
 
                 # Вставка описания к изображению
                 title = block.get("title")

@@ -337,9 +337,11 @@ for json_url in json_urls:
                 if response.status_code == 200:
                     image_filename = "screenshot_video.png"  # Имя файла изображения
                     image_path = os.path.join(folder_path, image_filename)  # Полный путь к файлу
+                    print(f"Скачено: скрин видео {image_filename}")
                     with open(image_path, "wb") as f:
                         f.write(response.content)
                     doc.add_picture(image_path, width=Inches(6.0))
+                    print(f"Добавлено: Скрин видео {image_filename}")
 
                 # Вставка описания к изображению
                 title = block.get("title")
@@ -347,14 +349,19 @@ for json_url in json_urls:
                     paragraph = doc.add_paragraph()
                     paragraph.add_run(title).font.size = Pt(12)
                     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-                    print("Добавлен: Скрин видео.")
+                    print("Добавлен: Описание к видео.")
 
                 # Вставка ссылки на видео
-                link = block.get("link")
-                if link:
+            link = block.get("link")
+            if link:
+                response = requests.head(link)
+                if response.status_code == 200:
                     doc.add_paragraph("Ссылка на видео:")
                     doc.add_paragraph(link)
                     print("Добавлен: url видео")
+                else:
+                    doc.add_paragraph("Видео недоступно по указанной ссылке.")
+                    print("Видео недоступно по указанной ссылке.")
 
 
 

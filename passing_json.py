@@ -1,4 +1,9 @@
+"""
+Парсим блоки json
 
+узнать в какой новости присутствуют интересующие  блоки
+
+"""
 import requests
 from tqdm import tqdm  # Импорт библиотеки tqdm
 
@@ -210,23 +215,45 @@ links = [
     # Добавьте остальные ссылки сюда
 ]
 
-# Проход по каждой ссылке с использованием tqdm для статус-бара
-for link in tqdm(links, desc="Processing links", unit="link"):
+# # Проход по каждой ссылке с использованием tqdm для статус-бара
+# for link in tqdm(links, desc="Парсинг url: ", unit="link"):
+#     # Отправка GET-запроса к ссылке и получение JSON-данных
+#     response = requests.get(link)
+#     if response.status_code == 200:
+#         json_data = response.json()
+#
+#         block_type_values = []
+#
+#         for block in json_data["data"]["blocks"]:
+#             block_type = block["blockType"]
+#             if block_type is not None:  # Основной текст
+#                 # text = block.get("text")
+#                 block_type_values.append(block_type)
+#         if block_type_values:
+#             print(f"Link: {link}")
+#             print(f"BlockType values: {block_type_values}")
+#             print()
+
+block_type_values = []
+
+# Проход по каждой ссылке
+for link in tqdm(links, desc="Парсинг url: ", unit="link"):
     # Отправка GET-запроса к ссылке и получение JSON-данных
     response = requests.get(link)
     if response.status_code == 200:
         json_data = response.json()
 
+        # Получение всех значений blockType для блоков в JSON-данных
         for block in json_data["data"]["blocks"]:
             block_type = block["blockType"]
-            if block_type == 15:  # Основной текст
-                text = block.get("text")
-                print(link)
-                break  # Прерывание цикла после нахождения одного блока
+            if block_type is not None:
+                block_type_values.append(block_type)
 
-        # Проверка наличия блока с blockType: 1
-        # for block in json_data.get("blocks", []):
-        #     if block.get("blockType") == 1:
-        #         # Вывод ссылки на консоль
-        #         print(link)
-        #         break  # Прерывание цикла после нахождения одного блока
+        # Удаление дублирующихся значений и преобразование в список
+        unique_block_type_values = list(set(block_type_values))
+
+        # Вывод ссылки и списка уникальных значений blockType, если он не пустой
+        if unique_block_type_values:
+            print(f"Link: {link}")
+            print(f"Пресутсвуют блоки: {unique_block_type_values}")
+            print()

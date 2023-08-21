@@ -19,7 +19,7 @@ import logging
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
-file_path = "list_json.txt"
+file_path = "list_json2.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
 # Логирование ошибок
@@ -263,14 +263,15 @@ for json_url in json_urls:
         #         print(f"Добавлен: Автор комментария пользователя сервиса")
 
         elif block_type == 2:  # Цитата и её автор V.2
-            text = block.get("text")
-            author = block.get("author")
+            text = block.get("text")    # Текст цитаты
+            author = block.get("author")    # Автор
             comment = block.get("comment")
+            regalia = block.get("regalia")  # Регалии автора
 
             if text:
                 # Добавление текста с курсивным стилем
                 paragraph = doc.add_paragraph()
-                run = paragraph.add_run(text)
+                run = paragraph.add_run(f'"{text}"')    # Добавляем кавычки текст цитаты
                 font = run.font
                 font.italic = True
                 # doc.add_paragraph(text)
@@ -282,6 +283,15 @@ for json_url in json_urls:
                 author_font = author_run.font
                 author_font.bold = True
                 print("Добавлен: Автор цитаты")
+
+            if regalia:
+                regalia_paragraph = doc.add_paragraph()
+                author_run = regalia_paragraph.add_run(regalia)
+                regalia_font = author_run.font
+                regalia_font.bold = True
+                regalia_font.italic = True  # Установка курсивного стиля
+                regalia_font.size = Pt(10)  # Установка размера шрифта в 10 точек
+                print("Добавлен: Регалии автора")
             #
             # if comment:
             #     doc.add_paragraph('Комментарий пользователя: "' + comment + '"')

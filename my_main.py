@@ -9,6 +9,7 @@ from htmldocx import HtmlToDocx
 from docx import Document
 from docx.shared import Pt
 import html2text
+from read_list_json import read_links_from_file
 
 """
 Создаем директорию с названием новости
@@ -17,14 +18,19 @@ import html2text
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
+file_path = "Материалы/5 бизнес-идей для женщин/list_json2.txt"
+# Получаем список ссылок из файла
+links = read_links_from_file(file_path)
+
+# Если список не пуст, продолжаем обработку
+# if links:
+#     # Далее можно проводить обработку списка ссылок
+#     print(links)
+
+
 
 # Список URL для JSON данных
-json_urls = [
-
-    "https://academyopen.ru/api-7/news/900",
-
-    # ...  другие URL-ы с JSON данными
-]
+json_urls = links
 
 
 def add_empty_line(doc):  # Пустая строка
@@ -178,12 +184,8 @@ for json_url in json_urls:
         materials_info = "Нет дополнительных материалов"  # Добавление информации в таблицу о доп материалах
         table.cell(2, 1).text = materials_info
 
-    # total_text_blocks = len(your_json["data"]["blocks"])
-    # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста')
-    # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста', mininterval=0.01)
 
     # Добавление текстовых блоков из "blocks"
-    # for block in tqdm(your_json["data"]["blocks"], desc="Processing blocks"):
     for block in your_json["data"]["blocks"]:
         block_type = block["blockType"]
         if block_type == 1:  # Основной текст
@@ -324,6 +326,36 @@ for json_url in json_urls:
                     doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
                     # add_empty_line(doc)
                     print(f"Добавлен: Изображение без комментария")
+
+        elif block["blockType"] == 3:  # Ведео
+            # carousel_images = block["image"]
+
+            # Скачивание и вставка изображения
+            image_url = block.get("image")
+            if image_url:
+                response = requests.get(image_url)
+                if response.status_code == 200:
+                    with open("screenshot_video.png", "wb") as f:
+                        f.write(response.content)
+                    doc.add_picture("screenshot_video.png",  width=Inches(6.0))
+
+                # Вставка описания к изображению
+                title = block.get("title")
+                if title:
+                    paragraph = doc.add_paragraph()
+                    paragraph.add_run(title).font.size = Pt(12)
+                    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                    print("Добавлен: Скрин видео.")
+
+                # Вставка ссылки на видео
+                link = block.get("link")
+                if link:
+                    doc.add_paragraph("Ссылка на видео:")
+                    doc.add_paragraph(link)
+                    print("Добавлен: url видео")
+
+
+
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

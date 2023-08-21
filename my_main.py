@@ -22,6 +22,7 @@ import logging
 file_path = "list_json.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
+# Логирование ошибок
 logging.basicConfig(filename='err_log.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s',
                     encoding='utf-8')
 
@@ -333,7 +334,7 @@ for json_url in json_urls:
                     print(f"Добавлен: Изображение без комментария")
 
         elif block["blockType"] == 3:  # Ведео
-            # carousel_images = block["image"]
+
 
             # Скачивание и вставка изображения
             image_url = block.get("image")

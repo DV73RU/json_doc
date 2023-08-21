@@ -9,6 +9,8 @@ from htmldocx import HtmlToDocx
 from docx import Document
 from docx.shared import Pt
 import html2text
+from read_list_json import read_links_from_file
+import logging
 
 """
 Создаем директорию с названием новости
@@ -17,14 +19,21 @@ import html2text
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
+file_path = "list_json2.txt"
+# Получаем список ссылок из файла
+links = read_links_from_file(file_path)
+# Логирование ошибок
+logging.basicConfig(filename='err_log.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s',
+                    encoding='utf-8')
+
+# Если список не пуст, продолжаем обработку
+# if links:
+#     # Далее можно проводить обработку списка ссылок
+#     print(links)
+
 
 # Список URL для JSON данных
-json_urls = [
-
-    "https://academyopen.ru/api-7/news/900",
-
-    # ...  другие URL-ы с JSON данными
-]
+json_urls = links
 
 
 def add_empty_line(doc):  # Пустая строка
@@ -77,13 +86,25 @@ for json_url in json_urls:
     except requests.exceptions.RequestException as e:
         print(f"Ошибка при получении данных из URL: {json_url}")
         print(f"Ошибка: {e}")
+        logging.error(f"Ошибка при получении данных из URL: {json_url}")
         continue  # Прерываем итерацию и переходим к следующему URL
 
     material_folder_name = "Материалы"
 
-    # Создаем папку для сохранения документов, если её еще нет
+    # Создание документа
+    doc = Document()
+    # Создание объекта конвертера
+    html_to_docx = HtmlToDocx()
+
+    # Получение значения из поля "id"
+    id_ = your_json["data"]["id"]
+    add_text_block(doc, str(id_), 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)  # Добавление названия ID статьи
+    print(f"ID статьи: {id_}")
+
+    # Создаем директорию для сохранения документов, если её еще нет
+    # Название директории название слитьи и номер id
     title = your_json["data"]["title"]
-    title_for_folder = clean_filename(title)  # Используем функцию для обработки имени
+    title_for_folder = clean_filename(title + "_" + str(id_))  # Используем функцию для обработки имени
     folder_path = os.path.join(os.getcwd(), material_folder_name, title_for_folder)
 
     os.makedirs(folder_path, exist_ok=True)
@@ -92,11 +113,6 @@ for json_url in json_urls:
     # Путь к файлу .docx внутри папки
     docx_filename = os.path.join(folder_path, f"{title_for_folder}.docx")
     print(f"Создан файл: {docx_filename}")
-
-    # Создание документа
-    doc = Document()
-    # Создание объекта конвертера
-    html_to_docx = HtmlToDocx()
 
     doc.styles['Normal'].font.name = 'Times New Roman'
     # Добавление таблицы для вставки значений Заголовок и Дискриптион
@@ -108,11 +124,6 @@ for json_url in json_urls:
     table.cell(0, 0).text = "Title"
     table.cell(1, 0).text = "Description"
     print("Добавлена таблица")
-
-    # Получение значения из поля "id"
-    id_ = your_json["data"]["id"]
-    add_text_block(doc, str(id_), 10, alignment=WD_PARAGRAPH_ALIGNMENT.LEFT)  # Добавление названия ID статьи
-    print(f"ID статьи: {id_}")
 
     # Добавление названия статьи
     add_text_block(doc, title, 14, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
@@ -163,6 +174,7 @@ for json_url in json_urls:
             except requests.exceptions.RequestException as e:
 
                 error_message = f"Ошибка при скачивании материала {material_name}: {e}"
+                logging.error(f"Ошибка при скачивании материала {material_name}: {e} : id = {id_}")
                 colored_error_message = f"\033[91m{error_message}\033[0m"
                 print(colored_error_message)
                 materials_info = f"Ошибка скачивания материала: {material_name}"
@@ -178,12 +190,7 @@ for json_url in json_urls:
         materials_info = "Нет дополнительных материалов"  # Добавление информации в таблицу о доп материалах
         table.cell(2, 1).text = materials_info
 
-    # total_text_blocks = len(your_json["data"]["blocks"])
-    # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста')
-    # text_bar = tqdm(total=total_text_blocks, desc='Вставка текста', mininterval=0.01)
-
     # Добавление текстовых блоков из "blocks"
-    # for block in tqdm(your_json["data"]["blocks"], desc="Processing blocks"):
     for block in your_json["data"]["blocks"]:
         block_type = block["blockType"]
         if block_type == 1:  # Основной текст
@@ -233,12 +240,35 @@ for json_url in json_urls:
         #             run.font.size = Pt(12)
         #             run.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-        elif block["blockType"] == 11:
+        elif block["blockType"] == 11:   # Список V.1
             # Извлекаем элементы списка
             list_items_html = block["elemList"]["elems"]
             for item in list_items_html:
-                html_to_docx.add_html_to_document(item, doc)
+                html_to_docx.add_html_to_document("• " + item, doc)
                 print(f"Добавлен: Элемент списка")
+
+        elif block["blockType"] == 24:   # Заголовок списка V.1
+            text = block.get("text")
+            if text:
+                paragraph = doc.add_paragraph(text)
+                run = paragraph.runs[0]
+                run.font.size = Pt(13)
+                run.bold = True
+                print(f"Добавлен: Заголовок списка")
+
+
+
+
+        # if block["blockType"] == 11:  # Список V.2
+        #     # Извлекаем элементы списка
+        #     list_items_html = block["elemList"]["elems"]
+        #     for item in list_items_html:
+        #         item_text = html_to_text(item)  # Преобразуем HTML в текст
+        #         paragraph = doc.add_paragraph(style="List Bullet")
+        #         run = paragraph.add_run("• ")  # Добавляем маркер точкой
+        #         run.bold = False  # Стиль маркера
+        #         paragraph.add_run(item_text)  # Добавляем элемент списка
+        #         print(f"Добавлен: Элемент списка")
 
         # elif block_type == 2:  # Комментарий пользователя сервиса V.1
         #     text = block.get("text")
@@ -256,14 +286,15 @@ for json_url in json_urls:
         #         print(f"Добавлен: Автор комментария пользователя сервиса")
 
         elif block_type == 2:  # Цитата и её автор V.2
-            text = block.get("text")
-            author = block.get("author")
+            text = block.get("text")    # Текст цитаты
+            author = block.get("author")    # Автор
             comment = block.get("comment")
+            regalia = block.get("regalia")  # Регалии автора
 
             if text:
                 # Добавление текста с курсивным стилем
                 paragraph = doc.add_paragraph()
-                run = paragraph.add_run(text)
+                run = paragraph.add_run(f'"{text}"')    # Добавляем кавычки текст цитаты
                 font = run.font
                 font.italic = True
                 # doc.add_paragraph(text)
@@ -275,6 +306,15 @@ for json_url in json_urls:
                 author_font = author_run.font
                 author_font.bold = True
                 print("Добавлен: Автор цитаты")
+
+            if regalia:
+                regalia_paragraph = doc.add_paragraph()
+                author_run = regalia_paragraph.add_run(regalia)
+                regalia_font = author_run.font
+                regalia_font.bold = True
+                regalia_font.italic = True  # Установка курсивного стиля
+                regalia_font.size = Pt(10)  # Установка размера шрифта в 10 точек
+                print("Добавлен: Регалии автора")
             #
             # if comment:
             #     doc.add_paragraph('Комментарий пользователя: "' + comment + '"')
@@ -303,6 +343,7 @@ for json_url in json_urls:
                 except requests.exceptions.RequestException as e:
                     print(f"Ошибка при скачивании изображения {image_url}: {e}")
                     error_message = f"Ошибка при скачивании изображения {image_url}: {e}"
+                    logging.error(f"Ошибка при скачивании изображения {image_url}: {e} : id = {id_}")
                     colored_error_message = f"\033[91m{error_message}\033[0m"
                     print(colored_error_message)
 
@@ -324,6 +365,50 @@ for json_url in json_urls:
                     doc.add_picture(image_path, width=Inches(6.0))  # Изменение размеров картинки
                     # add_empty_line(doc)
                     print(f"Добавлен: Изображение без комментария")
+
+        elif block["blockType"] == 3:  # Ведео
+
+
+            # Скачивание и вставка изображения
+            image_url = block.get("image")
+            if image_url:
+                response = requests.get(image_url)
+                if response.status_code == 200:
+                    image_filename = "screenshot_video.png"  # Имя файла изображения
+                    image_path = os.path.join(folder_path, image_filename)  # Полный путь к файлу
+                    print(f"Скачено: скрин видео {image_filename}")
+                    with open(image_path, "wb") as f:
+                        f.write(response.content)
+                    doc.add_picture(image_path, width=Inches(6.0))
+                    print(f"Добавлено: Скрин видео {image_filename}")
+
+                # Вставка описания к изображению
+                title = block.get("title")
+                if title:
+                    paragraph = doc.add_paragraph()
+                    paragraph.add_run(title).font.size = Pt(12)
+                    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                    print("Добавлен: Описание к видео.")
+
+                # Вставка ссылки на видео
+            link = block.get("link")
+            if link:
+                modified_link = link.replace("/_HLS_/", "/").replace(".m3u8", ".mp4")
+                modified_link = modified_link[:modified_link.rfind("/")] + ".mp4"
+
+                response = requests.head(modified_link)
+                if response.status_code == 200:
+                    doc.add_paragraph("Ссылка на видео:")
+                    doc.add_paragraph(modified_link)
+                    print(f"Добавлен: url видео - {modified_link}")
+                else:
+                    doc.add_paragraph("Видео недоступно по указанной ссылке:")
+                    doc.add_paragraph(modified_link)
+                    logging.error(f"Видео недоступно по ссылке: {modified_link} {id_}")
+                    print("Видео недоступно по указанной ссылке.")
+
+                # doc.add_paragraph("Исходная ссылка на видео:")
+                # print(f"Исходная ссылка на видео - {link}")
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

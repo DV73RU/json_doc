@@ -354,14 +354,21 @@ for json_url in json_urls:
                 # Вставка ссылки на видео
             link = block.get("link")
             if link:
-                response = requests.head(link)
+                modified_link = link.replace("/_HLS_/", "/").replace(".m3u8", ".mp4")
+                modified_link = modified_link[:modified_link.rfind("/")] + ".mp4"
+
+                response = requests.head(modified_link)
                 if response.status_code == 200:
                     doc.add_paragraph("Ссылка на видео:")
-                    doc.add_paragraph(link)
-                    print("Добавлен: url видео")
+                    doc.add_paragraph(modified_link)
+                    print(f"Добавлен: url видео - {modified_link}")
                 else:
-                    doc.add_paragraph("Видео недоступно по указанной ссылке.")
+                    doc.add_paragraph("Видео недоступно по указанной ссылке:")
+                    doc.add_paragraph(modified_link)
                     print("Видео недоступно по указанной ссылке.")
+
+                # doc.add_paragraph("Исходная ссылка на видео:")
+                # print(f"Исходная ссылка на видео - {link}")
 
 
 

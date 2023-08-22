@@ -196,15 +196,6 @@ for json_url in json_urls:
                 html_to_docx.add_html_to_document(text, doc)
                 print(f"Добавлен: Основной текст")
 
-
-        # elif block_type == 10:  # Заголовок V1.0
-        #     text = block.get("text")
-        #     if text:
-        #         # add_text_block(doc, text, 16, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-        #         html_to_docx.add_html_to_document(text, doc,)
-        #         print(f"Добавлен: Заголовок")
-        #         # add_empty_line(doc)
-
         elif block_type == 10:  # Заголовок V1.1
             text = block.get("text")
             if text:
@@ -213,7 +204,6 @@ for json_url in json_urls:
                 run.font.size = Pt(13)
                 run.bold = True
                 print(f"Добавлен: Заголовок")
-
 
         elif block["blockType"] == 11:   # Список V.1
             # Извлекаем элементы списка
@@ -261,10 +251,6 @@ for json_url in json_urls:
                 regalia_font.italic = True  # Установка курсивного стиля
                 regalia_font.size = Pt(10)  # Установка размера шрифта в 10 точек
                 print("Добавлен: Регалии автора")
-            #
-            # if comment:
-            #     doc.add_paragraph('Комментарий пользователя: "' + comment + '"')
-            #     print("Добавлен: Комментарий блока 2")
 
         elif block["blockType"] == 5 and "carousel" in block:  # Картинки
             carousel_images = block["carousel"]
@@ -314,7 +300,6 @@ for json_url in json_urls:
 
         elif block["blockType"] == 3:  # Ведео
 
-
             # Скачивание и вставка изображения
             image_url = block.get("image")
             if image_url:
@@ -352,9 +337,6 @@ for json_url in json_urls:
                     doc.add_paragraph(modified_link)
                     logging.error(f"Видео недоступно по ссылке: {modified_link} {id_}")
                     print("Видео недоступно по указанной ссылке.")
-
-                # doc.add_paragraph("Исходная ссылка на видео:")
-                # print(f"Исходная ссылка на видео - {link}")
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

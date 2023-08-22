@@ -19,17 +19,12 @@ import logging
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
-file_path = "list_json2.txt"
+file_path = "list_json.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
 # Логирование ошибок
 logging.basicConfig(filename='err_log.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s',
                     encoding='utf-8')
-
-# Если список не пуст, продолжаем обработку
-# if links:
-#     # Далее можно проводить обработку списка ссылок
-#     print(links)
 
 
 # Список URL для JSON данных
@@ -200,16 +195,6 @@ for json_url in json_urls:
                 # Преобразование HTML в DOCX
                 html_to_docx.add_html_to_document(text, doc)
                 print(f"Добавлен: Основной текст")
-                # text_bar.update(1)
-                # add_empty_line(doc)  # Вставляем пустую строку
-
-        # elif block_type == 10:  # Заголовок V1.0
-        #     text = block.get("text")
-        #     if text:
-        #         # add_text_block(doc, text, 16, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-        #         html_to_docx.add_html_to_document(text, doc,)
-        #         print(f"Добавлен: Заголовок")
-        #         # add_empty_line(doc)
 
         elif block_type == 10:  # Заголовок V1.1
             text = block.get("text")
@@ -219,26 +204,6 @@ for json_url in json_urls:
                 run.font.size = Pt(13)
                 run.bold = True
                 print(f"Добавлен: Заголовок")
-
-        # if block["blockType"] == 11:  # Список
-        #     list_items_html = block["elemList"]["elems"]
-        #     for item_html in list_items_html:
-        #         # Создаем параграф для элемента списка
-        #         paragraph = doc.add_paragraph(style="List Bullet")
-        #
-        #         # Добавляем знак "-" перед тегом <strong>
-        #         # run = paragraph.add_run("- ")
-        #         # run.bold = False
-        #
-        #         # Преобразуем HTML в текст и добавляем его в параграф
-        #         soup = BeautifulSoup(item_html, "html.parser")
-        #         text = soup.get_text()
-        #         paragraph.add_run(text)
-        #
-        #         # Устанавливаем стиль для текста в параграфе
-        #         for run in paragraph.runs:
-        #             run.font.size = Pt(12)
-        #             run.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
         elif block["blockType"] == 11:   # Список V.1
             # Извлекаем элементы списка
@@ -255,35 +220,6 @@ for json_url in json_urls:
                 run.font.size = Pt(13)
                 run.bold = True
                 print(f"Добавлен: Заголовок списка")
-
-
-
-
-        # if block["blockType"] == 11:  # Список V.2
-        #     # Извлекаем элементы списка
-        #     list_items_html = block["elemList"]["elems"]
-        #     for item in list_items_html:
-        #         item_text = html_to_text(item)  # Преобразуем HTML в текст
-        #         paragraph = doc.add_paragraph(style="List Bullet")
-        #         run = paragraph.add_run("• ")  # Добавляем маркер точкой
-        #         run.bold = False  # Стиль маркера
-        #         paragraph.add_run(item_text)  # Добавляем элемент списка
-        #         print(f"Добавлен: Элемент списка")
-
-        # elif block_type == 2:  # Комментарий пользователя сервиса V.1
-        #     text = block.get("text")
-        #     author = block.get("author")
-        #     if text:
-        #         # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-        #         html_to_docx.add_html_to_document(text, doc)
-        #
-        #         print(f"Добавлен: Текст комментария пользователя сервиса")
-        #
-        #     if author:
-        #         # add_text_block(doc, text, 11, alignment=WD_PARAGRAPH_ALIGNMENT.CENTER)
-        #
-        #         html_to_docx.add_html_to_document(author, doc)
-        #         print(f"Добавлен: Автор комментария пользователя сервиса")
 
         elif block_type == 2:  # Цитата и её автор V.2
             text = block.get("text")    # Текст цитаты
@@ -315,10 +251,6 @@ for json_url in json_urls:
                 regalia_font.italic = True  # Установка курсивного стиля
                 regalia_font.size = Pt(10)  # Установка размера шрифта в 10 точек
                 print("Добавлен: Регалии автора")
-            #
-            # if comment:
-            #     doc.add_paragraph('Комментарий пользователя: "' + comment + '"')
-            #     print("Добавлен: Комментарий блока 2")
 
         elif block["blockType"] == 5 and "carousel" in block:  # Картинки
             carousel_images = block["carousel"]
@@ -368,7 +300,6 @@ for json_url in json_urls:
 
         elif block["blockType"] == 3:  # Ведео
 
-
             # Скачивание и вставка изображения
             image_url = block.get("image")
             if image_url:
@@ -406,9 +337,6 @@ for json_url in json_urls:
                     doc.add_paragraph(modified_link)
                     logging.error(f"Видео недоступно по ссылке: {modified_link} {id_}")
                     print("Видео недоступно по указанной ссылке.")
-
-                # doc.add_paragraph("Исходная ссылка на видео:")
-                # print(f"Исходная ссылка на видео - {link}")
 
     # Сохранение документа названием статьи в папку с названием статьи
     doc.save(docx_filename)

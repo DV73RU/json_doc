@@ -11,7 +11,7 @@ from read_list_json import read_links_from_file
 
 # Список ссылок
 
-file_path = "links_with_numbers.txt"
+file_path = "list_json3.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
 
@@ -30,26 +30,24 @@ ws.append(["Дата", "Название статьи", "Ссылка"])
 
 # Проход по каждой ссылке
 for link in links:
-    # Отправка GET-запроса к ссылке и получение JSON-данных
     response = requests.get(link)
     if response.status_code == 200:
         json_data = response.json()
+        print(f"Link: {link} : OK")
 
-        # Получение всех значений blockType для блоков в JSON-данных
-        for block in json_data["data"]["blocks"]:
-            block_type = block["blockType"]
-            if block_type is not None:
-                block_type_values.append(block_type)
-
-        # Удаление дублирующихся значений и преобразование в список
-        unique_block_type_values = list(set(block_type_values))
-
-        # Вывод ссылки и списка уникальных значений blockType, если он не пустой
-        if unique_block_type_values:
-            print(f"Link: {link} : Пресутсвуют блоки: {unique_block_type_values}")
-            # print(f"Пресутсвуют блоки: {unique_block_type_values}")
+        date = json_data["data"]["date"]
+        article_title = json_data["data"]["title"]
+        
+        date_clear = date.split("T")[0]  # Отделяем от даты лишнее
+        link_real = link.replace("api-7/news/", "journal/")
+        ws.append([date_clear, article_title, link_real])
     else:
-        print(f"Link: {link} недоступен")
+        print(f"Link: {link} : отсутствует либо недоступна")
+
+# Изменение ширины столбца для названия статьи (например, до 40)
+ws.column_dimensions["A"].width = 20  # "A" - второй столбец, "40" - новая ширина
+ws.column_dimensions["B"].width = 60  # "B" - второй столбец, "40" - новая ширина
+ws.column_dimensions["C"].width = 100  # "B" - второй столбец, "40" - новая ширина
 
 # Сохраняем файл
 excel_file_path = "block_types.xlsx"

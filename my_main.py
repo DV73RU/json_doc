@@ -19,7 +19,7 @@ import logging
 Скачиваем доп материалы к новости и сохраняем в директорию 'название новости/matetials'
 
 """
-file_path = "list_json.txt"
+file_path = "list_json3.txt"
 # Получаем список ссылок из файла
 links = read_links_from_file(file_path)
 # Логирование ошибок
@@ -84,7 +84,7 @@ for json_url in json_urls:
         logging.error(f"Ошибка при получении данных из URL: {json_url}")
         continue  # Прерываем итерацию и переходим к следующему URL
 
-    material_folder_name = "Материалы"
+    material_folder_name = "Материалы_new"
 
     # Создание документа
     doc = Document()
@@ -157,29 +157,25 @@ for json_url in json_urls:
             material_url = material["file"]
             material_extension = material_url.split(".")[-1]
             material_filename = f"{material_name}.{material_extension}"
+            material_filename = clean_filename(material_filename)  # Очищаем имя файла от недопустимых символов
             material_path = os.path.join(materials_folder, material_filename)
             try:
                 material_response = requests.get(material_url)
-                material_response.raise_for_status()  # Проверка на успешный ответ (код 200)
+                material_response.raise_for_status()
                 with open(material_path, "wb") as material_file:
                     material_file.write(material_response.content)
                 print(f"Дополнительный материал скачан: {material_path}")
                 materials_info = material_name
-                table.cell(2, 1).text = materials_info  # Добавление в таблицу инфу о доп материале
+                table.cell(2, 1).text = materials_info
             except requests.exceptions.RequestException as e:
-
                 error_message = f"Ошибка при скачивании материала {material_name}: {e}"
                 logging.error(f"Ошибка при скачивании материала {material_name}: {e} : id = {id_}")
                 colored_error_message = f"\033[91m{error_message}\033[0m"
                 print(colored_error_message)
                 materials_info = f"Ошибка скачивания материала: {material_name}"
-
-                # Создаем объект run для стилизации текста
                 run = table.cell(2, 1).paragraphs[0].add_run(materials_info)
-
-                # Применяем стили шрифта (красный цвет)
                 font = run.font
-                font.color.rgb = RGBColor(255, 0, 0)  # Красный цвет
+                font.color.rgb = RGBColor(255, 0, 0)
     else:
         print("Нет дополнительных материалов.")
         materials_info = "Нет дополнительных материалов"  # Добавление информации в таблицу о доп материалах
